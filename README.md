@@ -7,6 +7,12 @@ inspired by other
 <br>Its designed to be interfaced with websites meaning you can write a client 
 <br>handler or use one of the example ones included.
 
+## A Typical payload
+Field | Type | Description
+------|------|------------
+op | Integer | opcode for the payload
+d | mixed(JSON Values) | event data 
+
 ## Server opcodes
 code | description | client action
 -----|-------------|--------------
