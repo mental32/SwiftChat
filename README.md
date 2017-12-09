@@ -27,7 +27,10 @@ code | description
 ### Room state change
 ```
 {
-	"avalible": true|false,
-	"room": "general"
+	"op": 1,
+	"d": {
+		"avalible": true|false,
+		"room": "general"
+	}
 }
 ```
