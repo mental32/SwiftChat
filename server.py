@@ -59,11 +59,14 @@ class Room:
         return {k: getattr(self, k) for k in self.bucketable}
 
     async def broadcast(self, message):
+        message = {
+            'author': '*'+self.name,
+            'contents': message
+        }
         for ws in self.sockets:
             await ws.send(jsonify(op=0, d=message))
 
     async def ban(self, user):
-        # ips = {ws.remote_address[0]: ws for ws in self.sockets}
         self.bans.add(user.ip)
         self.sockets.remove(user.ws)
         await user.ws.send(jsonify(op=1, d={'avaliable': False, 'room': self.name}))
@@ -114,8 +117,12 @@ class Server:
                 if data is None:
                     continue
                 elif data.get('op') is 0 and data.get('d'):
+                    message = {
+                        'author': user.name,
+                        'contents': data.get('d')
+                    }
                     for ws in user.room.sockets:
-                        await ws.send(jsonify(op=0, d=data.get('d')))
+                        await ws.send(jsonify(op=0, d=message))
 
         except Exception as e:
             print(str(e))

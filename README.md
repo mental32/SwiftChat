@@ -8,12 +8,14 @@ inspired by other
 <br>handler or use one of the example ones included.
 
 ## Server opcodes
-code | description
------|------------
-0 | Message recieved
-1 | Room state chage
+code | description | client action
+-----|-------------|--------------
+0 | Message recieved | recieve only
+1 | Message created  | send only
+2 | Room state chage | recieve only
 
 ### Message recieved
+The Message recieved payload will be sent when the server recieves a Message created payload.<br>The Message recieveds data will contain the authors name and the contents of the message.
 ```
 {
 	"op": 0,
@@ -27,7 +29,7 @@ code | description
 ### Room state change
 ```
 {
-	"op": 1,
+	"op": 2,
 	"d": {
 		"avalible": true|false,
 		"room": "general"
