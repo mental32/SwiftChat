@@ -10,10 +10,13 @@ import os
 loop = asyncio.get_event_loop()
 ##
 
+def jsonify(op, d):
+    return json.dumps({'op': op, 'd': d})
+
 class User:
     def __init__(self, websocket):
-        self.name = None
         self.ws = websocket
+        self.name = None
         self.room = None
 
 class Room:
@@ -57,6 +60,7 @@ class Server:
             await websocket.send('Connected to {0}:{1}'.format(self.host, self.port))
             while user.name is None:
                 await websocket.send('Username: ')
+                print('Loop')
                 d = await websocket.recv()
                 if d.strip():
                     room = self.rooms.get('general', self.rooms[tuple(self.rooms)[0]])
@@ -80,6 +84,7 @@ class Server:
             print(str(e))
         finally:
             self.sockets.remove(websocket)
+            user.room.sockets.remove(user.ws)
             print(f'Dropped connection: {id(websocket)}')
 
     def serve(self, **kwargs):

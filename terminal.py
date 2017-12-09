@@ -133,22 +133,26 @@ class Border(IO):
         cols, rows = self.resolution
 
         self.bordered = False
-        self.border_chars = list('╔╗╚╝═║')
-        self.top = '╔'+'═'*(cols-3)+'╗'
+        self.border_chars = list('╔╗╚╝═║╠╣')
+        self.top = '╔'+'═'*(cols-3)+'╗'+'\n'
         self.bottom = '╚'+'═'*(cols-3)+'╝'
-        self.wall = '║'+' '*(cols-3)+'║'
+        self.wall = '║'+' '*(cols-3)+'║'+'\n'
+        self.wall_break = '╠'+'═'*(cols-3)+'╣'+'\n'
+        self.border()
 
     def border(self):
         if not self.bordered:
             cols, rows = self.resolution
-            for row in range(0, rows-1):
+            for row in range(0, rows):
                 if row == 0:
-                    print(self.top)
-                elif row == rows-2:
-                    print(self.bottom)
+                    print(self.top, end='')
+                elif row == rows-1:
+                    print(self.bottom, end='')
+                elif row == rows-3:
+                	print(self.wall_break, end='')
                 else:
-                    print(self.wall)
-            print(self.right() + self.up(2), end='')
+                    print(self.wall, end='')
+            print(self.up() + self.left(cols-2), end='')
             self.bordered = True
 
     @property

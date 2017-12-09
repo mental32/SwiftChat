@@ -6,7 +6,7 @@ import websockets
 import asyncio
 import time
 import sys
-from terminal import Border
+from terminal import (Border, IO)
 ##
 loop = asyncio.get_event_loop()
 ##
@@ -15,27 +15,23 @@ loop = asyncio.get_event_loop()
 class Client:
     def __init__(self, io):
         self.io = io
-        self.io.border()
         self.exceptions = []
-        self.messages = [None for i in range(0, self.io.resolution[1]-2)]
 
     async def recieve(self, websocket):
         while True:
             try:
                 response = await asyncio.wait_for(websocket.recv(), timeout=0.05)
                 if response is not None:
-                    for i, m in enumerate(self.messages):
-                        if m is not None:
-                            self.messages[i] = response.split('\n')[0][self.io.resolution[1]-3]
-                            self.io.print(self.messages[i], x=5, y=2, stream='response')
-                            break
-                        continue
-                    self.io.mv_cursor(*self.io.input_line)
+                    cols, rows = self.io.resolution
+                    msg = self.io.stream_get(till_last='\n')
+                    self.io.clean_line()
+                    self.io.print(response[:cols-3], stream='response', end='\n')
+                    self.io.print(msg)
             except asyncio.TimeoutError:
                 pass
             except Exception as e:
                 self.exceptions.append((str(e), int(time.time())))
-                break
+                sys.exit()
 
     async def input(self, websocket):
         try:
@@ -52,6 +48,7 @@ class Client:
                     elif char == ':':
                         pass
                     else:
+                        # self.io.streams['main'].append(char)
                         self.io.print(char)
         except KeyboardInterrupt:
             print(self.io.clear)
@@ -61,23 +58,21 @@ class Client:
         try:
             destination = 'ws://{0}:{1}'.format(host, port)
             async with websockets.connect(destination) as websocket:
-                # asyncio.ensure_future(self.recieve(websocket))
+                asyncio.ensure_future(self.recieve(websocket))
                 await self.input(websocket)
         except Exception as e:
             self.exceptions.append((str(e), int(time.time())))
 
 
 def main():
-    io = Border()
+    io = IO()
     client = Client(io)
     try:
         loop.run_until_complete(client.run())
     except KeyboardInterrupt:
         print(io.clear)
         sys.exit()
-    print(io.clear)
-    from pprint import pprint
-    pprint(client.exceptions)
+    print(client.exceptions)
 
 
 if __name__ == '__main__':
