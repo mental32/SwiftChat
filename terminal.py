@@ -86,14 +86,6 @@ class IO:
     def mv_cursor(self, x, y):
         print(self.pos(x, y), end='')
 
-    def calculate_cursor(self, after):
-    	x_displacement, y_displacement = after
-    	x, y = self.cursor_pos
-    	self.cursor_pos = (
-    		x+x_displacement, 
-    		y+y_displacement)
-
-
     def print(self, *args, **kwargs):
         args = (str(_) for _ in args)
 
@@ -149,7 +141,7 @@ class Border(IO):
                 elif row == rows-1:
                     print(self.bottom, end='')
                 elif row == rows-3:
-                	print(self.wall_break, end='')
+                    print(self.wall_break, end='')
                 else:
                     print(self.wall, end='')
             print(self.up() + self.left(cols-2), end='')
