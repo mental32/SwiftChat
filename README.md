@@ -3,7 +3,7 @@
 
 SwiftChat is a python websocket chat server application, 
 inspired by other<br>social media and chat applications such as:
-Skype, Discord and WhatsApp. Its designed to be interfaced with websites.
+Skype, Discord and WhatsApp.<br>Its designed to be interfaced with websites.
 
 ## Server opcodes
 code | description
