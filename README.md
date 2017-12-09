@@ -15,7 +15,7 @@ code | description | client action
 2 | Room state chage | recieve only
 
 ### Message recieved
-The Message recieved payload will be sent when the server recieves a Message created payload.<br>The Message recieveds data will contain the authors name and the contents of the message.
+The Message recieved payload will be sent when the server recieves a Message created payload.<br>The Message recieved payload data will contain the authors name and the contents of the message.
 ```
 {
 	"op": 0,
