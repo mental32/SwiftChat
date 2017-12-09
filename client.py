@@ -5,12 +5,16 @@
 import websockets
 import asyncio
 import time
+import json
 import sys
 from terminal import (Border, IO)
 ##
 loop = asyncio.get_event_loop()
 ##
 
+
+def jsonify(op, d):
+    return json.dumps({'op': op, 'd': d})
 
 class Client:
     def __init__(self, io):
@@ -20,13 +24,14 @@ class Client:
     async def recieve(self, websocket):
         while True:
             try:
-                response = await asyncio.wait_for(websocket.recv(), timeout=0.05)
+                response = await asyncio.wait_for(websocket.recv(), timeout=0.1)
                 if response is not None:
                     cols, rows = self.io.resolution
                     msg = self.io.stream_get(till_last='\n')
                     self.io.clean_line()
                     self.io.print(response[:cols-3], stream='response', end='\n')
                     self.io.print(msg)
+                    await websocket.send(jsonify(op=1, d='ACK'))
             except asyncio.TimeoutError:
                 pass
             except Exception as e:
@@ -43,12 +48,9 @@ class Client:
                         self.io.backspace()
                     elif char is self.io._return:
                         msg = self.io.stream_get(till_last='\n')
-                        await websocket.send(msg)
+                        await websocket.send(jsonify(op=0, d=msg))
                         self.io.clean_line()
-                    elif char == ':':
-                        pass
                     else:
-                        # self.io.streams['main'].append(char)
                         self.io.print(char)
         except KeyboardInterrupt:
             print(self.io.clear)
