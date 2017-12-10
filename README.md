@@ -61,3 +61,16 @@ A room may change its availability if:
 	}
 }
 ```
+
+
+### Server shutdown
+A server may manually be shutdown from the console or an external shutdown payload with the correct authorization key.<br>
+Reguardless if a server is manually triggered to shutdown it will send out the Server shutdown payload to warn its clients
+```
+{
+	"op": 3,
+	"d": {
+		"reason": "Maintenance, this field may be null"
+	}
+}
+```
