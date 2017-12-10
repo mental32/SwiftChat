@@ -28,7 +28,7 @@ The Message recieved payload will be sent when the server recieves a Message cre
 	"op": 0,
 	"d": {
 		"author": "Jimothy",
-		"contents": "Hello world!"
+		"content": "Hello world!"
 	}
 }
 ```
@@ -38,7 +38,7 @@ The Message create payload will only be sent by the client.
 <br>The payload data will only contain the message contents. 
 ```
 {
-	"op": 0,
+	"op": 1,
 	"d": {
 		"content": "Message contents!"
 	}

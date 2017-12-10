@@ -13,8 +13,8 @@ loop = asyncio.get_event_loop()
 ##
 
 
-def jsonify(op, d):
-    return json.dumps({'op': op, 'd': d})
+def jsonify(data):
+    return json.dumps(data)
 
 
 class Client:
@@ -27,10 +27,16 @@ class Client:
             try:
                 response = await asyncio.wait_for(websocket.recv(), timeout=1)
                 if response is not None:
+                    response = json.loads(response)
                     cols, rows = self.io.resolution
                     msg = self.io.stream_get(till_last='\n')
                     self.io.clean_line()
-                    self.io.print(response[:cols-3], stream='response', end='\n')
+                    if response['op'] == 0:
+                        if response['d']['content'] == 'login as: ':
+                            self.io.print(response['d']['content'], stream='response', end='')
+                        else:
+                            user, content = response['d']['author'], response['d']['content']
+                            self.io.print(user+': '+content, stream='response', end='\n')
                     self.io.print(msg)
             except asyncio.TimeoutError:
                 pass
@@ -41,14 +47,14 @@ class Client:
     async def input(self, websocket):
         try:
             while True:
-                await asyncio.sleep(0.15)
+                await asyncio.sleep(0.1)
                 if self.io.kbhit():
                     char = self.io.getch()
                     if char is self.io._backspace:
                         self.io.backspace()
                     elif char is self.io._return:
                         msg = self.io.stream_get(till_last='\n')
-                        await websocket.send(jsonify(op=0, d=msg))
+                        await websocket.send(jsonify({'op': 1, 'd': {'content': msg}}))
                         self.io.clean_line()
                     else:
                         self.io.print(char)

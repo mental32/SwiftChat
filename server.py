@@ -7,14 +7,15 @@ import time
 import json
 # import sys
 # import os
+import payloads
 ##
 loop = asyncio.get_event_loop()
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 ##
 
 
-def jsonify(op, d):
-    return json.dumps({'op': op, 'd': d})
+def jsonify(data):
+    return json.dumps(data)
 
 
 def decode(data):
@@ -30,6 +31,7 @@ class User:
         self.ws = websocket
         self.remote_address = websocket.remote_address
         self.ip = self.remote_address[0]
+        self.connected_at = int(time.time())
         self.name = None
         self.room = None
 
@@ -59,27 +61,27 @@ class Room:
         return {k: getattr(self, k) for k in self.bucketable}
 
     async def broadcast(self, message):
-        message = {
-            'author': '*'+self.name,
-            'contents': message
-        }
+        pl = payloads.message_recieved(author='*'+self.name, content=message)
         for ws in self.sockets:
-            await ws.send(jsonify(op=0, d=message))
+            await ws.send(jsonify(pl))
 
     async def ban(self, user):
-        self.bans.add(user.ip)
         self.sockets.remove(user.ws)
-        await user.ws.send(jsonify(op=1, d={'avaliable': False, 'room': self.name}))
+        self.bans.add(user.ip)
+        pl = payloads.room_state_change(avaliable=False, room=self.name)
+        await user.ws.send(jsonify(pl))
 
 
 class Server:
     def __init__(self, loop):
         self.rooms = {
+            'NLI lobby': Room(name='NLI lobby'),
             'general': Room(name='general'),
-            'irc': Room(name='irc'),
         }
+        self.command_prefix = '\\'
         self.host = 'localhost'
         self.port = 8765
+        self.prefrences = {}
         self.sockets = set()
         self.users = set()
         self.loop = loop
@@ -88,27 +90,34 @@ class Server:
     def connected_to(self):
         return 'Connected to {0}:{1}'.format(self.host, self.port)
 
+    @property
+    def first_room(self):
+        return self.rooms[tuple(self.rooms)[0]]
+
     async def handler(self, websocket, path):
         try:
             self.sockets.add(websocket)
-            print('Connection added:', id(websocket), websocket.remote_address)
             user = User(websocket)
-            await websocket.send(jsonify(op=0, d=self.connected_to))
-            await websocket.send(jsonify(op=0, d='Username: '))
+            if self.prefrences.get('motd', None):
+                await websocket.send(self.prefrences['motd'])
+            else:
+                if self.prefrences.get('show_connected_to'):
+                    await websocket.send(self.prefrences.get('connected_to', self.connected_to))
+
+            # Login sequence
+            await websocket.send(jsonify({'op': 0, 'd': {'content': 'login as: '}}))
             while user.name is None:
-                data = await websocket.recv()
-                data = decode(data)
+                data = decode(await websocket.recv())
                 if data is None:
                     continue
-                elif data.get('op') is 0 and data.get('d'):
-                    first_room = self.rooms[tuple(self.rooms)[0]]
-                    room = self.rooms.get('general', first_room)
-                    user.name = data['d']
-                    user.room = room
-                    room.sockets.add(user.ws)
-                    await room.broadcast(user.name+' Has entered the room!')
+                elif data.get('op') == 1 and data.get('d', {}).get('content'):
+                    user.name = data['d']['content']
+                    user.room = self.rooms.get('NLI lobby', self.first_room)
+                    user.room.sockets.add(user.ws)
+                    await user.room.broadcast(user.name+' Has entered the room!')
                 else:
                     continue
+            # Login sequence end
 
             while True:
                 asyncio.sleep(0.1)
@@ -116,13 +125,16 @@ class Server:
                 print(data)
                 if data is None:
                     continue
-                elif data.get('op') is 0 and data.get('d'):
-                    message = {
-                        'author': user.name,
-                        'contents': data.get('d')
-                    }
-                    for ws in user.room.sockets:
-                        await ws.send(jsonify(op=0, d=message))
+                elif data.get('op') == 1 and data.get('d', {}).get('content'):
+                    content = data['d']['content']
+                    if content.startswith('\\'):
+                        pass
+                    else:
+                        pl = payloads.message_recieved(author=user.name, content=content)
+                        for ws in user.room.sockets:
+                            await ws.send(jsonify(pl))
+                else:
+                    continue
 
         except Exception as e:
             print(str(e))
@@ -137,7 +149,7 @@ class Server:
     def serve(self, **kwargs):
         s1 = websockets.serve(self.handler, self.host, self.port)
         self.loop.run_until_complete(s1)
-        print('Serving')
+        print(f'Serving @ {self.host}:{self.port}')
         self.loop.run_forever()
 
 
