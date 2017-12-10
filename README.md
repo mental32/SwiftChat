@@ -17,11 +17,12 @@ d | mixed(JSON Values) | event data
 code | description | client action
 -----|-------------|--------------
 0 | Message recieved | recieve only
-1 | Message created  | send only
+1 | Message create   | send only
 2 | Room state chage | recieve only
+3 | Server shutdown  | recieve only
 
 ### Message recieved
-The Message recieved payload will be sent when the server recieves a Message created payload.<br>The payload data will contain the authors name and the contents of the message.
+The Message recieved payload will be sent when the server recieves a Message create payload.<br>The payload data will contain the authors name and the contents of the message.
 ```
 {
 	"op": 0,
@@ -32,7 +33,20 @@ The Message recieved payload will be sent when the server recieves a Message cre
 }
 ```
 
+### Message create
+The Message create payload will only be sent by the client.
+<br>The payload data will only contain the message contents. 
+```
+{
+	"op": 0,
+	"d": {
+		"content": "Message contents!"
+	}
+}
+```
+
 ### Room state change
+The Room state change payload will 
 ```
 {
 	"op": 2,
