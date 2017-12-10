@@ -46,12 +46,17 @@ The Message create payload will only be sent by the client.
 ```
 
 ### Room state change
-The Room state change payload will 
+The Room state change payload will be sent once the availbility of the room changes.<br>
+A room may change its availability if:
+* The room gets manually closed
+* The room gets locked
+* The room gets deleted
+* The client has been banned from the room
 ```
 {
 	"op": 2,
 	"d": {
-		"avalible": true|false,
+		"available": true|false,
 		"room": "general"
 	}
 }
