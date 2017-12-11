@@ -8,6 +8,7 @@ import time
 import json
 import sys
 from terminal import IO
+from pprint import pformat
 ##
 loop = asyncio.get_event_loop()
 ##
@@ -21,6 +22,7 @@ class Client:
     def __init__(self, io):
         self.io = io
         self.exceptions = []
+        self.prefix = '>'
 
     async def recieve(self, websocket):
         while True:
@@ -37,6 +39,9 @@ class Client:
                         else:
                             user, content = response['d']['author'], response['d']['content']
                             self.io.print(user+': '+content, stream='response', end='\n')
+                    else:
+                        self.cache = response
+                    self.io.print(self.prefix, stream='prefix')
                     self.io.print(msg)
             except asyncio.TimeoutError:
                 pass
@@ -56,6 +61,7 @@ class Client:
                         msg = self.io.stream_get(till_last='\n')
                         await websocket.send(jsonify({'op': 1, 'd': {'content': msg}}))
                         self.io.clean_line()
+                        self.io.print(self.prefix, stream='prefix')
                     else:
                         self.io.print(char)
         except KeyboardInterrupt:

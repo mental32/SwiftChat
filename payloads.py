@@ -6,3 +6,6 @@ def room_state_change(avaliable, room):
 
 def server_shutdown(reason=None):
     return {'op': 3, 'd': {'reason': reason}}
+
+def cache_update(**kwargs):
+	return {'op': 4, 'd': {**kwargs}}

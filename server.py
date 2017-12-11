@@ -94,6 +94,16 @@ class Server:
     def first_room(self):
         return self.rooms[tuple(self.rooms)[0]]
 
+    @property
+    def cache(self):
+        return {
+            'rooms': tuple(room.bucket for room in self.rooms.values()),
+            'command_prefix': self.command_prefix,
+            'host': self.host,
+            'port': self.port,
+            'users': len(self.users)
+        }
+
     async def handler(self, websocket, path):
         try:
             self.sockets.add(websocket)
@@ -118,6 +128,7 @@ class Server:
                 else:
                     continue
             # Login sequence end
+            await websocket.send(jsonify(payloads.cache_update(**self.cache)))
 
             while True:
                 asyncio.sleep(0.1)

@@ -11,7 +11,7 @@ inspired by other
 Field | Type | Description
 ------|------|------------
 op | Integer | opcode for the payload
-d | mixed(JSON Values) | event data 
+d | mixed (JSON Values) | event data 
 
 ## Server opcodes
 code | description | client action
@@ -20,6 +20,7 @@ code | description | client action
 1 | Message create   | send only
 2 | Room state chage | recieve only
 3 | Server shutdown  | recieve only
+4 | cache update | recieve only
 
 ### Message recieved
 The Message recieved payload will be sent when the server recieves a Message create payload.<br>The payload data will contain the authors name and the contents of the message.
@@ -71,6 +72,28 @@ Reguardless if a server is manually triggered to shutdown it will send out the S
 	"op": 3,
 	"d": {
 		"reason": "Maintenance, this field may be null"
+	}
+}
+```
+
+
+### Cache update
+The server sends a cache update once a client logs in succesfully or when the client sends a special request for the cache update.
+<br>The cache contains:
+* rooms
+* server command prefix
+* host name
+* application port
+* amount of users connected
+```
+{
+	"op": 4,
+	"d": {
+		"rooms": ,
+		"command_prefix": "\",
+		"host": "localhost",
+		"port": 8765,
+		"users": 5
 	}
 }
 ```
