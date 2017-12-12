@@ -19,8 +19,6 @@ d  | mixed (JSON Values) | event data
 }
 ```
 
-<br>
-
 ## Payload opcodes
 code | description      | client action
 -----|------------------|--------------
