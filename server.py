@@ -3,6 +3,7 @@ import websockets
 # import datetime
 import asyncio
 import signal
+import shlex
 import time
 import json
 # import sys
@@ -25,7 +26,6 @@ def decode(data):
     except json.decoder.JSONDecodeError:
         return None
 
-
 class User:
     def __init__(self, websocket):
         self.ws = websocket
@@ -36,7 +36,7 @@ class User:
         self.room = None
 
     def __str__(self):
-        return str(self.name or self.ip)
+        return str(self.name or 'Guest')
 
 
 class Room:
@@ -98,11 +98,26 @@ class Server:
     def cache(self):
         return {
             'rooms': tuple(room.bucket for room in self.rooms.values()),
+            'users': tuple(str(user) for user in self.users)
             'command_prefix': self.command_prefix,
             'host': self.host,
             'port': self.port,
-            'users': len(self.users)
         }
+
+    async def execute(self, command, user):
+        op, *args = shlex.split(command)
+        if op == 'switch':
+            target = args[0]
+            if target in self.rooms:
+                room = self.rooms[target]
+                if not room.locked:
+                    pass
+                else:
+                    pass
+            else:
+                pass 
+            # await websocket.send('Attempting to move to channel {0}'.format(args[0]))
+            pass
 
     async def handler(self, websocket, path):
         try:
@@ -138,8 +153,12 @@ class Server:
                     continue
                 elif data.get('op') == 1 and data.get('d', {}).get('content'):
                     content = data['d']['content']
-                    if content.startswith('\\'):
-                        pass
+                    if content.startswith(self.command_prefix):
+                        response = await self.execute(content, user)
+                        if response is None:
+                            pl = payloads.message_recieved(author=user.name, content=content)
+                            for ws in user.room.sockets:
+                                await ws.send(json(pl))
                     else:
                         pl = payloads.message_recieved(author=user.name, content=content)
                         for ws in user.room.sockets:

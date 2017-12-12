@@ -4,6 +4,7 @@
 ##
 import websockets
 import asyncio
+import signal
 import time
 import json
 import sys
@@ -11,6 +12,7 @@ from terminal import IO
 from pprint import pformat
 ##
 loop = asyncio.get_event_loop()
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 ##
 
 
@@ -22,20 +24,21 @@ class Client:
     def __init__(self, io):
         self.io = io
         self.exceptions = []
+        self.flipped = False
         self.prefix = '>'
 
     async def recieve(self, websocket):
         while True:
             try:
-                response = await asyncio.wait_for(websocket.recv(), timeout=1)
+                response = await asyncio.wait_for(websocket.recv(), timeout=100)
                 if response is not None:
                     response = json.loads(response)
-                    cols, rows = self.io.resolution
+                    op, data = response.values()
                     msg = self.io.stream_get(till_last='\n')
                     self.io.clean_line()
-                    if response['op'] == 0:
-                        if response['d']['content'] == 'login as: ':
-                            self.io.print(response['d']['content'], stream='response', end='')
+                    if op == 0:
+                        if data['content'] == 'login as: ':
+                            self.io.print(data['content'], stream='response', end='')
                         else:
                             user, content = response['d']['author'], response['d']['content']
                             self.io.print(user+': '+content, stream='response', end='\n')
@@ -43,6 +46,8 @@ class Client:
                         self.cache = response
                     self.io.print(self.prefix, stream='prefix')
                     self.io.print(msg)
+                    if msg:
+                        self.flipped = True
             except asyncio.TimeoutError:
                 pass
             except Exception as e:
@@ -59,6 +64,9 @@ class Client:
                         self.io.backspace()
                     elif char is self.io._return:
                         msg = self.io.stream_get(till_last='\n')
+                        if self.flipped:
+                            msg = ''.join(reversed(msg))
+                            self.flipped = False
                         await websocket.send(jsonify({'op': 1, 'd': {'content': msg}}))
                         self.io.clean_line()
                         self.io.print(self.prefix, stream='prefix')
@@ -81,12 +89,7 @@ class Client:
 def main():
     io = IO()
     client = Client(io)
-    try:
-        loop.run_until_complete(client.run())
-    except KeyboardInterrupt:
-        print(io.clear)
-        sys.exit()
-    print(client.exceptions)
+    loop.run_until_complete(client.run())
 
 
 if __name__ == '__main__':
