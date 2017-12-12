@@ -7,15 +7,6 @@ inspired by other
 <br>Its designed to be interfaced with websites meaning you can write a client 
 <br>handler or use one of the example ones included.
 
-## Server opcodes
-code | description | client action
------|-------------|--------------
-0 | Message recieved | recieve only
-1 | Message create   | send only
-2 | Room state chage | recieve only
-3 | Server shutdown  | recieve only
-4 | cache update | recieve only
-
 ### Message recieved
 The Message recieved payload will be sent when the server recieves a Message create payload.<br>The payload data will contain the authors name and the contents of the message.
 ```

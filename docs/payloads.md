@@ -8,4 +8,22 @@ Any data being sent to the server has to also be JSON encoded.<br>
 Field | Type | Description
 ------|------|------------
 op | Integer | opcode for the payload
-d  | mixed (JSON Values) | event data 
+d  | mixed (JSON Values) | event data
+
+```
+{
+	"op": 1,
+	"d": {
+		"contents": "Huzzuh"
+	}
+}
+```
+<br>
+## Payload opcodes
+code | description      | client action
+-----|------------------|--------------
+0    | Message recieved | recieve only
+1    | Message create   | send only
+2    | Room state chage | recieve only
+3    | Server shutdown  | recieve only
+4    | cache update     | recieve only
