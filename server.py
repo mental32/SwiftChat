@@ -38,6 +38,18 @@ class User:
     def __str__(self):
         return str(self.name or 'Guest')
 
+    async def swap_rooms(self, new_room, silent_entry=False):
+        # Remove old room
+        if self.room is None:
+            self.room = new_room
+            self.room.sockets.add(self.ws)
+        else:
+            self.room.sockets.remove(self.ws)
+            self.room = new_room
+            self.room.sockets.add(self.ws)
+
+        if not silent_entry:
+            await self.room.broadcast(self.name+' Has entered the room!')
 
 class Room:
     def __init__(self, name):
@@ -98,10 +110,10 @@ class Server:
     def cache(self):
         return {
             'rooms': tuple(room.bucket for room in self.rooms.values()),
-            'users': tuple(str(user) for user in self.users)
+            'users': tuple(str(user) for user in self.users),
             'command_prefix': self.command_prefix,
             'host': self.host,
-            'port': self.port,
+            'port': self.port
         }
 
     async def execute(self, command, user):
@@ -111,13 +123,11 @@ class Server:
             if target in self.rooms:
                 room = self.rooms[target]
                 if not room.locked:
-                    pass
+                    await user.swap_rooms(room)
                 else:
                     pass
             else:
-                pass 
-            # await websocket.send('Attempting to move to channel {0}'.format(args[0]))
-            pass
+                await user.ws.send(payloads.message_recieved(author='*SERVER', content='That room does not exist'))
 
     async def handler(self, websocket, path):
         try:
@@ -137,9 +147,7 @@ class Server:
                     continue
                 elif data.get('op') == 1 and data.get('d', {}).get('content'):
                     user.name = data['d']['content']
-                    user.room = self.rooms.get('NLI lobby', self.first_room)
-                    user.room.sockets.add(user.ws)
-                    await user.room.broadcast(user.name+' Has entered the room!')
+                    await user.swap_rooms(self.rooms.get('NLI lobby', self.first_room))
                 else:
                     continue
             # Login sequence end
@@ -155,10 +163,6 @@ class Server:
                     content = data['d']['content']
                     if content.startswith(self.command_prefix):
                         response = await self.execute(content, user)
-                        if response is None:
-                            pl = payloads.message_recieved(author=user.name, content=content)
-                            for ws in user.room.sockets:
-                                await ws.send(json(pl))
                     else:
                         pl = payloads.message_recieved(author=user.name, content=content)
                         for ws in user.room.sockets:
