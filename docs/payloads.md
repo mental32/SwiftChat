@@ -20,10 +20,10 @@ d  | mixed (JSON Values) | event data
 ```
 
 ## Payload opcodes
-code | name             | client action | description
------|------------------|---------------|------------
-0    | Message recieved | recieve only  | Sent when there is a message to be processed in the queue and the user is in the recieve scope
-1    | Message create   | send only     |
-2    | Room state chage | recieve only  |
-3    | Server shutdown  | recieve only  |
-4    | cache update     | recieve only  |
+code | name             | client action
+-----|------------------|--------------
+0    | Message recieved | recieve only
+1    | Message create   | send only
+2    | Room state chage | recieve only
+3    | Server shutdown  | recieve only
+4    | cache update     | recieve only
