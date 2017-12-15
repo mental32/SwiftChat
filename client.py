@@ -9,7 +9,6 @@ import time
 import json
 import sys
 from terminal import IO
-from pprint import pformat
 ##
 loop = asyncio.get_event_loop()
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -23,6 +22,7 @@ def jsonify(data):
 class Client:
     def __init__(self, io):
         self.io = io
+        self.connected = False
         self.exceptions = []
         self.flipped = False
         self.prefix = '>'
@@ -42,21 +42,31 @@ class Client:
                         else:
                             user, content = response['d']['author'], response['d']['content']
                             self.io.print(user+': '+content, stream='response', end='\n')
+                    elif op == 2:
+                        pass
+                    elif op == 3:
+                        pass
+                    elif op == 4:
+                        self.cache = response['d']
+                        for room in response['d']['rooms']:
+                            self.io.print(str(room), stream='response', end='\n')
+                        self.io.print(self.cache['me'], stream='response', end='\n')
                     else:
-                        self.cache = response
+                        pass
                     self.io.print(self.prefix, stream='prefix')
                     self.io.print(msg)
                     if msg:
                         self.flipped = True
             except asyncio.TimeoutError:
                 pass
+            except websockets.ConnectionClosed:
+                self.connected = False
             except Exception as e:
                 self.exceptions.append((str(e), int(time.time())))
-                sys.exit()
 
     async def input(self, websocket):
         try:
-            while True:
+            while self.connected:
                 await asyncio.sleep(0.1)
                 if self.io.kbhit():
                     char = self.io.getch()
@@ -80,6 +90,8 @@ class Client:
         try:
             destination = 'ws://{0}:{1}'.format(host, port)
             async with websockets.connect(destination) as websocket:
+                self.connected = True
+                self.io.print(f'Connected to {host}:{port}', stream='response', end='\n')
                 asyncio.ensure_future(self.recieve(websocket))
                 await self.input(websocket)
         except Exception as e:
