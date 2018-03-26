@@ -96,12 +96,12 @@ The server sends a cache update once a client logs in succesfully or when the cl
 {
 	"op": 4,
 	"d": {
-		"rooms": {"general": room_data, "discussion": room_data},
-		"command_prefix": "\",
+		"rooms": {"room name": room_data, ...},
+		"command_prefix": "!",
 		"host": "localhost",
 		"port": 8765,
 		"users": 5
-		"me": {"room": { room_data }}
+		"me": {"room": room_id}
 	}
 }
 ```
