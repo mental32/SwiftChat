@@ -21,5 +21,6 @@ def human_time():
 	date = datetime.datetime.now()
 	return ':'.join(str(item).zfill(2) for item in (date.hour, date.minute, date.second))
 
+
 def make_id():
 	return random.randint(1, 100000000)

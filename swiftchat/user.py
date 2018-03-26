@@ -48,8 +48,8 @@ class User:
 
 			if self.room:
 				await self.room.disconnect(self)
-				if kwargs.get('silent_exit', False):
-					await self.room.send('User has left the room.')
+				if not kwargs.get('silent_exit', False):
+					await self.room.send('%s has left the room.' %(self.name))
 
 				self.room = new_room
-				new_room.sockets.add(self.ws)
+				new_room.add(self)

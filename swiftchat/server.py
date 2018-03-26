@@ -27,10 +27,15 @@ class Server:
 		self.stdout = kwargs.get('stdout', sys.stdout)
 
 		self.rooms = [Room(name='general')]
+		self.commands = {}
 
 	@property
 	def default_room(self):
 		return self.rooms[0]
+
+	def command(self, func):
+		self.commands[func.__name__] = func
+		return func
 
 	def get_user(self, username, room=None):
 		for user in self.users:
@@ -52,13 +57,21 @@ class Server:
 	def log(self, data):
 		self.stdout.write('[%s] %s\n' %(utils.human_time(), data))
 
-	async def execute(self, data):
+	async def execute(self, user, data):
 		if data.startswith(self.command_prefix):
-			op, *args = shlex.split(data)
+			op, *args = shlex.split(data[len(self.command_prefix):])
+			if op not in self.commands:
+				return 1
+
+			func = self.commands[op]
+			try:
+				await func(self, user, *args)
+			except Exception as error:
+				await self.on_error(error)
 			return 0
 		return 1
 
-	async def on_handler_error(self, error):
+	async def on_error(self, error):
 		self.log('Error! %s' %(error))
 
 	async def handler(self, ws, path):
@@ -92,12 +105,12 @@ class Server:
 				if not isinstance(data, dict) or data.get('op') != 1:
 					raise Exception
 
-				sts = (await self.execute(data['d']['content']))
+				sts = (await self.execute(user, data['d']['content']))
 				if sts == 1:
 					await user.room.send(data)
 
 		except Exception as error:
-			await self.on_handler_error(error)
+			await self.on_error(error)
 
 		finally:
 			self.sockets.remove(ws)

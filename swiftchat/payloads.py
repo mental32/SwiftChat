@@ -1,3 +1,6 @@
+##
+#  -*- coding: utf-8 -*-
+##
 def message_recieved(author, content):
 	return {'op': 0, 'd': {'author': author, 'content': content}}
 
